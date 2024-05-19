@@ -4,40 +4,77 @@ from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
+from cryptography.hazmat.backends import default_backend
+from cryptography.exceptions import InvalidTag
 
 sertificate_dir = "sertificate"
 
-with open(os.path.join(sertificate_dir, "private_key.pem"), "rb") as f:
-    private_key = serialization.load_pem_private_key(
-        f.read(),
-        password=None,
-    )
 
-filename = sys.argv[1]
-cleared_filename = filename[10:-4]
+def decrypt_file(filename):
+    cleared_filename = filename[:-10]
 
-try:
-    with open(filename, "rb") as f:
-        data = f.read()
-except FileNotFoundError:
-    print(f"File {filename} not found")
-    sys.exit(1)
+    try:
+        with open(filename, "rb") as f:
+            data = f.read()
+    except FileNotFoundError:
+        print(f"File {filename} not found")
+        sys.exit(1)
 
-iv = data[:12]
-encrypted_session_key = data[12:12+256]
-ciphertext = data[12+256:]
+    # get data from file
+    iv = data[:12]
+    encrypted_session_key = data[12:12+256]
+    salt = data[12+256:12+256+16]
+    backup_ciphertext = data[12+256+16:12+256+16+48]
+    ciphertext = data[12+256+16+48:]
 
-session_key = private_key.decrypt(
-    encrypted_session_key,
-    padding.OAEP(
-        mgf=padding.MGF1(algorithm=hashes.SHA256()),
-        algorithm=hashes.SHA256(),
-        label=None
-    )
-)
+    try:
+        # get private key from sertificate
+        with open(os.path.join(sertificate_dir, "private_key.pem"), "rb") as f:
+            private_key = serialization.load_pem_private_key(
+                f.read(),
+                password=None,
+            )
+        session_key = private_key.decrypt(
+            encrypted_session_key,
+            padding.OAEP(
+                mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                algorithm=hashes.SHA256(),
+                label=None
+            )
+        )
+    except FileNotFoundError:
+        # if private key not found, ask for password
+        print(f"Private key not found")
+        password = input("Input password to restore data: ").encode()
+        kdf = Scrypt(
+            salt=salt,
+            length=32,
+            n=2**14,
+            r=8,
+            p=1,
+            backend=default_backend()
+        )
 
-aesgcm = AESGCM(session_key)
-plaintext = aesgcm.decrypt(iv, ciphertext, None)
+        key_backup = kdf.derive(password)
 
-with open("decrypted_" + cleared_filename, "wb") as f:
-    f.write(plaintext)
+        aesgcm = AESGCM(key_backup)
+        try:
+            session_key = aesgcm.decrypt(salt, backup_ciphertext, None)
+        except InvalidTag:
+            print("Wrong password")
+            sys.exit(1)
+
+    # decrypt file
+    aesgcm = AESGCM(session_key)
+    plaintext = aesgcm.decrypt(iv, ciphertext, None)
+
+    with open(cleared_filename, "wb") as f:
+        f.write(plaintext)
+
+    return cleared_filename
+
+
+if __name__ == "__main__":
+    filename = sys.argv[1]
+    decrypt_file(filename)
