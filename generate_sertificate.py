@@ -5,6 +5,7 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import hashes
 from datetime import datetime, timedelta
+from sslib import shamir
 
 
 sertificate_dir = "sertificate"
@@ -13,6 +14,24 @@ private_key = rsa.generate_private_key(
     public_exponent=65537,
     key_size=2048,
 )
+
+ans = input("Do you want to split the private key? (y/n): ")
+if ans in ["y", "Y", "Yes", "yes"]:
+    required_shares = int(input("Enter the number of required shares: "))
+    distributed_shares = int(input("Enter the number of distributed shares: "))
+    # get private key bytes
+    private_key_bytes = private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.TraditionalOpenSSL,
+        encryption_algorithm=serialization.NoEncryption())
+    # split the private key
+    data = shamir.split_secret(
+        private_key_bytes, required_shares, distributed_shares)
+    # save shares
+    for idx, share in data['shares']:
+        with open(f"{sertificate_dir}/share_{idx}.key", "wb") as f:
+            f.write(share)
+    print("Private key has been split")
 
 subject = issuer = x509.Name([
     x509.NameAttribute(NameOID.COUNTRY_NAME, "PL"),

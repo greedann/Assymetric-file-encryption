@@ -29,21 +29,25 @@ def encrypt_file(filename, separate_key=False):
         )
     )
 
-    # encrypt session key with password from user
-    password = input("Enter password: ").encode()
-    salt = os.urandom(16)
-    kdf = Scrypt(
-        salt=salt,
-        length=32,
-        n=2**14,
-        r=8,
-        p=1,
-        backend=default_backend()
-    )
-    backup_key = kdf.derive(password)
-    aesgcm = AESGCM(backup_key)
-    backup_ciphertext = aesgcm.encrypt(salt, session_key, None)
-
+    ans = input("Do you want to add a password to restore the file? (y/n): ")
+    if ans in ["y", "Y", "Yes", "yes"]:
+        # encrypt session key with password from user
+        password = input("Enter password: ").encode()
+        salt = os.urandom(16)
+        kdf = Scrypt(
+            salt=salt,
+            length=32,
+            n=2**14,
+            r=8,
+            p=1,
+            backend=default_backend()
+        )
+        backup_key = kdf.derive(password)
+        aesgcm = AESGCM(backup_key)
+        backup_ciphertext = aesgcm.encrypt(salt, session_key, None)
+    else:
+        salt = os.urandom(16)
+        backup_ciphertext = os.urandom(48)
 
     try:
         with open(filename, "rb") as f:
