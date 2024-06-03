@@ -8,7 +8,11 @@ from datetime import datetime, timedelta
 from sslib import shamir
 
 
-sertificate_dir = "sertificate"
+certificate_dir = "certificate"
+
+# check if the certificate directory exists
+if not os.path.exists(certificate_dir):
+    os.makedirs(certificate_dir)
 
 private_key = rsa.generate_private_key(
     public_exponent=65537,
@@ -29,7 +33,7 @@ if ans in ["y", "Y", "Yes", "yes"]:
         private_key_bytes, required_shares, distributed_shares)
     # save shares
     for idx, share in data['shares']:
-        with open(f"{sertificate_dir}/share_{idx}.key", "wb") as f:
+        with open(f"{certificate_dir}/share_{idx}.key", "wb") as f:
             f.write(share)
     print("Private key has been split")
 
@@ -56,10 +60,10 @@ certificate = (
     .sign(private_key, hashes.SHA256())
 )
 
-if not os.path.exists(sertificate_dir):
-    os.makedirs(sertificate_dir)
+if not os.path.exists(certificate_dir):
+    os.makedirs(certificate_dir)
 
-with open(os.path.join(sertificate_dir, "private_key.pem"), "wb") as f:
+with open(os.path.join(certificate_dir, "private_key.pem"), "wb") as f:
     f.write(
         private_key.private_bytes(
             encoding=serialization.Encoding.PEM,
@@ -68,7 +72,7 @@ with open(os.path.join(sertificate_dir, "private_key.pem"), "wb") as f:
         )
     )
 
-with open(os.path.join(sertificate_dir, "certificate.pem"), "wb") as f:
+with open(os.path.join(certificate_dir, "certificate.pem"), "wb") as f:
     f.write(
         certificate.public_bytes(serialization.Encoding.PEM)
     )

@@ -2,7 +2,7 @@ from sslib import shamir
 import os
 import glob
 
-sertificate_dir = "sertificate"
+sertificate_dir = "certificate"
 
 files = glob.glob(os.path.join(sertificate_dir, '*.key'))
 

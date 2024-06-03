@@ -8,11 +8,11 @@ from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
 from cryptography.hazmat.backends import default_backend
 from cryptography.exceptions import InvalidTag
 
-sertificate_dir = "sertificate"
+certificate_dir = "certificate"
 
 
 def decrypt_file(filename):
-    cleared_filename = filename[:-10]
+    cleared_filename = filename[:-14]
 
     try:
         with open(filename, "rb") as f:
@@ -29,8 +29,8 @@ def decrypt_file(filename):
     ciphertext = data[12+256+16+48:]
 
     try:
-        # get private key from sertificate
-        with open(os.path.join(sertificate_dir, "private_key.pem"), "rb") as f:
+        # get private key from certificate
+        with open(os.path.join(certificate_dir, "private_key.pem"), "rb") as f:
             private_key = serialization.load_pem_private_key(
                 f.read(),
                 password=None,

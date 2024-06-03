@@ -8,12 +8,12 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
 from cryptography.hazmat.backends import default_backend
 
-sertificate_dir = "sertificate"
+certificate_dir = "certificate"
 
 
 def encrypt_file(filename, separate_key=False):
-    # getting public key from sertificate
-    with open(os.path.join(sertificate_dir, "certificate.pem"), "rb") as f:
+    # getting public key from certificate
+    with open(os.path.join(certificate_dir, "certificate.pem"), "rb") as f:
         certificate = x509.load_pem_x509_certificate(f.read())
         public_key = certificate.public_key()
 
