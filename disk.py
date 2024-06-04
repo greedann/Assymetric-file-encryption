@@ -7,5 +7,3 @@ def is_disk_connected(disk_name):
         return disk_name.split('/')[-1] in disks
     except subprocess.CalledProcessError:
         return False
-
-

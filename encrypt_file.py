@@ -73,8 +73,6 @@ def encrypt_file(filename, separate_key=False):
             f.write(iv + encrypted_session_key + salt + backup_ciphertext + ciphertext)
         return filename + "_encrypted" + ".bin"
     
-    
-
 
 if __name__ == "__main__":
     filename = sys.argv[1]

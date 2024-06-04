@@ -8,8 +8,6 @@ from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
 from cryptography.hazmat.backends import default_backend
 from cryptography.exceptions import InvalidTag
 
-certificate_dir = "certificate"
-
 
 def decrypt_file(filename):
     cleared_filename = filename[:-14]
@@ -30,9 +28,33 @@ def decrypt_file(filename):
 
     try:
         # get private key from certificate
-        with open(os.path.join(certificate_dir, "private_key.pem"), "rb") as f:
+        while True:
+            print("Select option: ")
+            print("1. Load private key from file")
+            print("2. Input private key to console")
+            answer = input("Option: ")
+            if answer in ["1", "2"]:
+                break
+            else:
+                print("Invalid option")
+        if answer == "1":
+            certificate_dir = input("Input path to private key file: \n")
+            with open(certificate_dir, "rb") as f:
+                private_key = serialization.load_pem_private_key(
+                    f.read(),
+                    password=None,
+                )
+        elif answer == "2":
+            print("Input private key in PEM format")
+            key_str = ""
+            while True:
+                line = input()
+                key_str += line + "\n"
+                if "END RSA PRIVATE KEY" in line:
+                    break
+
             private_key = serialization.load_pem_private_key(
-                f.read(),
+                key_str.encode(),
                 password=None,
             )
         session_key = private_key.decrypt(

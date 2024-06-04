@@ -1,4 +1,4 @@
-# Assymetric-file-encryption
+# Asymmetric file encryption
  
 ## Introduction
 
@@ -23,7 +23,7 @@ Dependencies
 To run the application locally you need to clone the repository.
 ```bash
 git clone https://github.com/greedann/Assymetric-file-encryption.git 
-cd Assymetric-file-encryption
+cd Asymmetric-file-encryption
 ```
 Create virtual environment and install requirements
 ```bash
@@ -35,11 +35,11 @@ Now you ready to go
 
 ## Usage
 
-### Generate sertificate
+### Generate certificate
 First, to use the cryptographic functions, you need to generate your digital signature and its private key. This can be done as follows:
 
 ```bash
-python generate_sertificate.py
+python generate_certificate.py
 ```
 
 You now have your own certificate that you can use to encrypt your data.
@@ -66,10 +66,26 @@ For decryption the procedure is very similar, but you need to change `encrypt` t
 
 ### Private key restore
 
-If you split your private key into several parts when creating a digital signature, it is possible to restore it. To do this, you need to collect the minimum number of parts (specified at creation) and place them in the `sertificate` directory. And then execute the command
+If you split your private key into several parts when creating a digital signature, it is possible to restore it. To do this, you need to collect the minimum number of parts (specified at creation) and place them in the `certificate` directory. And then execute the command
 
 ```bash
 python restore_private_key.py
 ```
 
-If the parts of the key were correct and were sufficient, the `private_key.pem` file will appear in the `sertificate` directory, containing your original private key.
+If the parts of the key were correct and were sufficient, the `private_key.pem` file will appear in the `certificate` directory, containing your original private key.
+
+## Technical details
+
+### File encryption
+
+Files are encrypted using RSA symmetric encryption algorithm and session key. The session key in turn is encrypted using the public key and AES algorithm in GCM mode and stored in the encrypted file. To decrypt the file, a private key is used to decrypt the session key, and then the session key decrypts the file itself.
+
+### Disk encryption
+
+For disk encryption “full disk encryption” is used. That is, not only the data itself is encrypted, but also the partition data. First all data is copied from the disk and then encrypted as a file. After encryption, the data is written back to the disk. When decrypting, the process is reversed.
+
+### Key recovery
+
+The possibility of data recovery in case of private key loss is realized in 2 ways:
+1. Through private key recovery from parts using Shamir's scheme
+2. By restoring a file using a password. The session key is encrypted using a password when encrypting a file and is saved with the file. When decrypting the file, the user must enter the password that will be used to decrypt the session key.

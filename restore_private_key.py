@@ -2,9 +2,9 @@ from sslib import shamir
 import os
 import glob
 
-sertificate_dir = "certificate"
+certificate_dir = input("Enter the path to the directory with shares: ")
 
-files = glob.glob(os.path.join(sertificate_dir, '*.key'))
+files = glob.glob(os.path.join(certificate_dir, '*.key'))
 
 shares = []
 for file_path in files:
@@ -20,7 +20,7 @@ data = {
 }
 key_restored = shamir.recover_secret(data)
 
-with open(os.path.join(sertificate_dir, "private_key.pem"), "wb") as f:
+with open(os.path.join(certificate_dir, "private_key.pem"), "wb") as f:
     f.write(key_restored)
 
 print("Private key restored")
